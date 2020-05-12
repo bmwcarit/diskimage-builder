@@ -13,6 +13,8 @@
 # under the License.
 
 import logging
+import pathlib
+import time
 import uuid
 
 from diskimage_builder.block_device.exception \
@@ -35,6 +37,8 @@ file_system_max_label_length = {
     "xfs": 12,
     "vfat": 11
 }
+
+BLOCKDEV_WAIT_TIMEOUT_SEC = 60
 
 
 class FilesystemNode(NodeBase):
@@ -128,6 +132,15 @@ class FilesystemNode(NodeBase):
             self.state['blockdev'] = {}
         device = self.state['blockdev'][self.base]['device']
         cmd.append(device)
+
+        logger.info("Waiting for block device: %s", device)
+        device_path = pathlib.Path(device)
+        for _ in range(BLOCKDEV_WAIT_TIMEOUT_SEC):
+            if device_path.is_block_device():
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Timeout waiting for block device")
 
         logger.debug("Creating fs command [%s]", cmd)
         exec_sudo(cmd)
