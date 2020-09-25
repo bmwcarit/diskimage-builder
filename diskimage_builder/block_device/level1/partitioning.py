@@ -207,6 +207,7 @@ class Partitioning(PluginBase):
         # mount them
         if not os.path.exists("/.dockerenv"):
             exec_sudo(["kpartx", "-uvs", self.device_path])
+            exec_sudo(["dmsetup", "--noudevsync", "mknodes"])
         else:
             # If running inside Docker, make our nodes manually,
             # because udev will not be working. kpartx cannot run in
