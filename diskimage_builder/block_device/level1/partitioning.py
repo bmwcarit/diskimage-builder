@@ -14,6 +14,7 @@
 
 import logging
 import os
+import time
 
 from diskimage_builder.block_device.exception import \
     BlockDeviceSetupException
@@ -207,13 +208,20 @@ class Partitioning(PluginBase):
         # mount them
         if not os.path.exists("/.dockerenv"):
             exec_sudo(["kpartx", "-uvs", self.device_path])
+            logger.info("Sleeping for 120s ...")
+            time.sleep(120)
             exec_sudo(["dmsetup", "--noudevsync", "mknodes"])
+            logger.info("Sleeping for 120s ...")
+            time.sleep(120)
         else:
             # If running inside Docker, make our nodes manually,
             # because udev will not be working. kpartx cannot run in
             # sync mode in docker.
             exec_sudo(["kpartx", "-av", self.device_path])
             exec_sudo(["dmsetup", "--noudevsync", "mknodes"])
+
+        # "saftey sync" to make sure the partitions are written
+        exec_sudo(["sync"])
 
         return
 
